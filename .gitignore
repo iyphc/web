@@ -1,0 +1,5 @@
+# Runtime-файлы HSQLDB
+data/
+
+# macOS
+.DS_Store

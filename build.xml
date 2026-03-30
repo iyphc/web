@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="car-dealership-db" default="help" basedir=".">
+
+    <property name="db.dir" value="data"/>
+    <property name="db.name" value="car_dealership"/>
+    <property name="db.driver" value="org.hsqldb.jdbcDriver"/>
+    <property name="db.url" value="jdbc:hsqldb:file:${db.dir}/${db.name};shutdown=true"/>
+    <property name="db.user" value="sa"/>
+    <property name="db.password" value=""/>
+    <property name="hsqldb.jar" value="/usr/share/java/hsqldb1.8.0.jar"/>
+
+    <property name="schema.file" value="db/schema.sql"/>
+    <property name="seed.file" value="db/seed.sql"/>
+
+    <path id="db.classpath">
+        <pathelement location="${hsqldb.jar}"/>
+    </path>
+
+    <!-- Макрос для выполнения SQL-файла -->
+    <macrodef name="run-sql-file">
+        <attribute name="src"/>
+        <sequential>
+            <sql driver="${db.driver}" url="${db.url}"
+                 userid="${db.user}" password="${db.password}"
+                 autocommit="true" onerror="abort"
+                 delimiter=";" encoding="UTF-8">
+                <classpath refid="db.classpath"/>
+                <transaction src="@{src}"/>
+            </sql>
+        </sequential>
+    </macrodef>
+
+    <!-- Макрос для вывода результата SELECT-запроса -->
+    <macrodef name="show-table">
+        <attribute name="label"/>
+        <text name="query"/>
+        <sequential>
+            <echo message="=== @{label} ==="/>
+            <sql driver="${db.driver}" url="${db.url}"
+                 userid="${db.user}" password="${db.password}"
+                 autocommit="true" onerror="abort"
+                 print="yes" showheaders="true" showtrailers="true"
+                 delimiter=";" encoding="UTF-8">
+                <classpath refid="db.classpath"/>
+                <transaction>@{query}</transaction>
+            </sql>
+        </sequential>
+    </macrodef>
+
+    <target name="help" description="Показать список основных задач">
+        <echo message="Доступные задачи:"/>
+        <echo message="  ant create-db  - создать структуру БД"/>
+        <echo message="  ant init-db    - создать структуру и заполнить тестовыми данными"/>
+        <echo message="  ant show-db    - вывести содержимое БД"/>
+        <echo message="  ant clear-db   - удалить файлы БД"/>
+        <echo message="  ant reset-db   - полностью пересоздать БД и заполнить ее"/>
+    </target>
+
+    <target name="prepare" description="Подготовить каталоги">
+        <mkdir dir="${db.dir}"/>
+    </target>
+
+    <target name="create-db" depends="prepare" description="Создать структуру БД">
+        <echo message="Создание структуры БД..."/>
+        <run-sql-file src="${schema.file}"/>
+    </target>
+
+    <target name="init-db" depends="create-db" description="Заполнить БД тестовыми данными">
+        <echo message="Инициализация БД тестовыми данными..."/>
+        <run-sql-file src="${seed.file}"/>
+    </target>
+
+    <target name="show-db" depends="prepare" description="Вывести содержимое БД">
+        <show-table label="CAR_BRANDS">
+            SELECT brand_id, brand_name, manufacturer_name
+            FROM car_brands ORDER BY brand_id;
+        </show-table>
+
+        <show-table label="CARS">
+            SELECT c.car_id, b.brand_name, c.registration_number,
+                   c.transmission_type, c.price, c.mileage_km
+            FROM cars c JOIN car_brands b ON b.brand_id = c.brand_id
+            ORDER BY c.car_id;
+        </show-table>
+
+        <show-table label="CLIENTS">
+            SELECT client_id, full_name, phone, email
+            FROM clients ORDER BY client_id;
+        </show-table>
+
+        <show-table label="ORDERS">
+            SELECT o.order_id, o.ordered_at, cl.full_name,
+                   o.status, o.need_test_drive, o.car_id
+            FROM orders o JOIN clients cl ON cl.client_id = o.client_id
+            ORDER BY o.order_id;
+        </show-table>
+
+        <show-table label="ORDER_REQUIREMENTS">
+            SELECT order_id, desired_brand_id,
+                   desired_transmission_type, desired_price_max
+            FROM order_requirements ORDER BY order_id;
+        </show-table>
+
+        <show-table label="TEST_DRIVES">
+            SELECT td.test_drive_id, cl.full_name,
+                   c.registration_number, td.test_drive_at
+            FROM test_drives td
+            JOIN clients cl ON cl.client_id = td.client_id
+            JOIN cars c ON c.car_id = td.car_id
+            ORDER BY td.test_drive_id;
+        </show-table>
+    </target>
+
+    <target name="clear-db" description="Удалить файлы БД">
+        <echo message="Удаление файлов БД..."/>
+        <delete dir="${db.dir}" failonerror="false"/>
+    </target>
+
+    <target name="reset-db" depends="clear-db,init-db" description="Полностью пересоздать БД и заполнить ее"/>
+
+</project>
