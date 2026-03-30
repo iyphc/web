@@ -1,19 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="car-dealership-db" default="help" basedir=".">
+<project name="car-dealership" default="help" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
 
-    <property name="db.dir" value="data"/>
-    <property name="db.name" value="car_dealership"/>
-    <property name="db.driver" value="org.hsqldb.jdbcDriver"/>
-    <property name="db.url" value="jdbc:hsqldb:file:${db.dir}/${db.name};shutdown=true"/>
-    <property name="db.user" value="sa"/>
-    <property name="db.password" value=""/>
-    <property name="hsqldb.jar" value="/usr/share/java/hsqldb1.8.0.jar"/>
+    <!-- =================== Свойства =================== -->
+    <property name="db.dir"       value="data"/>
+    <property name="db.name"      value="car_dealership"/>
+    <property name="db.driver"    value="org.hsqldb.jdbc.JDBCDriver"/>
+    <property name="db.url"       value="jdbc:hsqldb:file:${db.dir}/${db.name};shutdown=true"/>
+    <property name="db.user"      value="sa"/>
+    <property name="db.password"  value=""/>
 
-    <property name="schema.file" value="db/schema.sql"/>
-    <property name="seed.file" value="db/seed.sql"/>
+    <property name="schema.file"  value="db/schema.sql"/>
+    <property name="seed.file"    value="db/seed.sql"/>
+
+    <!-- Каталоги Java-проекта -->
+    <property name="src.main"      value="src/main/java"/>
+    <property name="src.test"      value="src/test/java"/>
+    <property name="res.main"      value="src/main/resources"/>
+    <property name="res.test"      value="src/test/resources"/>
+    <property name="build.dir"     value="build"/>
+    <property name="classes.dir"   value="${build.dir}/classes"/>
+    <property name="test.classes"  value="${build.dir}/test-classes"/>
+    <property name="lib.dir"       value="lib"/>
+    <property name="report.dir"    value="${build.dir}/test-reports"/>
+
+    <!-- =================== Ivy : resolve =================== -->
+    <target name="resolve" description="Скачать зависимости через Ivy">
+        <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" sync="true"/>
+    </target>
+
+    <!-- =================== Classpaths =================== -->
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}/compile" erroronmissingdir="false">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="test.classpath">
+        <path refid="compile.classpath"/>
+        <fileset dir="${lib.dir}/test" erroronmissingdir="false">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="${classes.dir}"/>
+        <pathelement location="${test.classes}"/>
+        <pathelement location="${res.main}"/>
+        <pathelement location="${res.test}"/>
+    </path>
 
     <path id="db.classpath">
-        <pathelement location="${hsqldb.jar}"/>
+        <fileset dir="${lib.dir}/compile" erroronmissingdir="false">
+            <include name="hsqldb*.jar"/>
+        </fileset>
     </path>
 
     <!-- Макрос для выполнения SQL-файла -->
@@ -49,11 +86,17 @@
 
     <target name="help" description="Показать список основных задач">
         <echo message="Доступные задачи:"/>
+        <echo message="  ant resolve    - скачать зависимости (Ivy)"/>
+        <echo message="  ant compile    - скомпилировать исходный код"/>
+        <echo message="  ant compile-tests - скомпилировать тесты"/>
+        <echo message="  ant test       - запустить TestNG-тесты"/>
         <echo message="  ant create-db  - создать структуру БД"/>
         <echo message="  ant init-db    - создать структуру и заполнить тестовыми данными"/>
         <echo message="  ant show-db    - вывести содержимое БД"/>
         <echo message="  ant clear-db   - удалить файлы БД"/>
         <echo message="  ant reset-db   - полностью пересоздать БД и заполнить ее"/>
+        <echo message="  ant clean      - удалить каталог сборки"/>
+        <echo message="  ant clean-all  - удалить сборку и БД"/>
     </target>
 
     <target name="prepare" description="Подготовить каталоги">
@@ -117,5 +160,46 @@
     </target>
 
     <target name="reset-db" depends="clear-db,init-db" description="Полностью пересоздать БД и заполнить ее"/>
+
+    <!-- =================== Компиляция =================== -->
+    <target name="compile" depends="resolve" description="Скомпилировать исходный код">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.main}" destdir="${classes.dir}"
+               includeantruntime="false" encoding="UTF-8" source="1.8" target="1.8">
+            <classpath refid="compile.classpath"/>
+        </javac>
+        <copy todir="${classes.dir}">
+            <fileset dir="${res.main}"/>
+        </copy>
+    </target>
+
+    <target name="compile-tests" depends="compile" description="Скомпилировать тесты">
+        <mkdir dir="${test.classes}"/>
+        <javac srcdir="${src.test}" destdir="${test.classes}"
+               includeantruntime="false" encoding="UTF-8" source="1.8" target="1.8">
+            <classpath refid="test.classpath"/>
+        </javac>
+        <copy todir="${test.classes}">
+            <fileset dir="${res.test}"/>
+        </copy>
+    </target>
+
+    <!-- =================== Тесты =================== -->
+    <target name="test" depends="compile-tests" description="Запустить TestNG-тесты">
+        <mkdir dir="${report.dir}"/>
+        <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="test.classpath"/>
+        <testng classpathref="test.classpath"
+                outputdir="${report.dir}"
+                haltonfailure="true">
+            <xmlfileset dir="${res.test}" includes="testng.xml"/>
+        </testng>
+    </target>
+
+    <!-- =================== Очистка =================== -->
+    <target name="clean" description="Удалить каталог сборки">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="clean-all" depends="clean,clear-db" description="Удалить сборку и БД"/>
 
 </project>

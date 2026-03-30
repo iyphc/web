@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Car Dealership DAO Tests" verbose="1">
+    <test name="DAO Tests">
+        <classes>
+            <class name="ru.msu.cmc.webprac.dao.CarBrandDAOTest"/>
+            <class name="ru.msu.cmc.webprac.dao.CarDAOTest"/>
+            <class name="ru.msu.cmc.webprac.dao.ClientDAOTest"/>
+            <class name="ru.msu.cmc.webprac.dao.OrderDAOTest"/>
+            <class name="ru.msu.cmc.webprac.dao.TestDriveDAOTest"/>
+        </classes>
+    </test>
+</suite>

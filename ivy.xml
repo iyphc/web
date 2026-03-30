@@ -1,0 +1,25 @@
+<ivy-module version="2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+
+    <info organisation="ru.msu.cmc" module="webprac" revision="1.0"/>
+
+    <configurations>
+        <conf name="compile" description="Compile-time dependencies"/>
+        <conf name="test"    extends="compile" description="Test dependencies"/>
+    </configurations>
+
+    <dependencies>
+        <!-- Hibernate -->
+        <dependency org="org.hibernate" name="hibernate-core" rev="5.6.15.Final" conf="compile->default"/>
+
+        <!-- HSQLDB -->
+        <dependency org="org.hsqldb" name="hsqldb" rev="2.7.2" conf="compile->default"/>
+
+        <!-- Logging -->
+        <dependency org="ch.qos.logback" name="logback-classic" rev="1.2.12" conf="compile->default"/>
+
+        <!-- TestNG -->
+        <dependency org="org.testng" name="testng" rev="7.8.0" conf="test->default"/>
+    </dependencies>
+</ivy-module>

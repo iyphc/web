@@ -8,6 +8,7 @@
 - [Требования](#требования)
 - [Быстрый старт](#быстрый-старт)
 - [Команды сборки](#команды-сборки)
+- [Архитектура Hibernate-слоя](#архитектура-hibernate-слоя)
 - [Сценарии использования](#сценарии-использования)
 - [Страницы приложения](#страницы-приложения)
 - [Схема навигации](#схема-навигации)
@@ -20,15 +21,30 @@
 
 ```
 .
-├── build.xml            # Ant-файл сборки (создание, инициализация, просмотр и очистка БД)
+├── build.xml                # Ant-файл сборки
+├── ivy.xml                  # Описание зависимостей (Ivy)
 ├── db/
-│   ├── schema.sql       # DDL-скрипт создания структуры БД
-│   └── seed.sql         # Скрипт заполнения БД тестовыми данными
-├── db/
-│   └── schema.puml      # PlantUML-диаграмма схемы БД
+│   ├── schema.sql           # DDL-скрипт создания структуры БД
+│   ├── seed.sql             # Скрипт заполнения БД тестовыми данными
+│   └── schema.puml          # PlantUML-диаграмма схемы БД
+├── src/
+│   ├── main/
+│   │   ├── java/ru/msu/cmc/webprac/
+│   │   │   ├── entities/    # Hibernate-сущности (CarBrand, Car, Client, Order, ...)
+│   │   │   ├── enums/       # Перечисления (TransmissionType, OrderStatus)
+│   │   │   ├── dao/         # DAO-интерфейсы
+│   │   │   │   └── impl/    # DAO-реализации
+│   │   │   └── utils/       # HibernateUtil
+│   │   └── resources/
+│   │       ├── hibernate.cfg.xml
+│   │       └── logback.xml
+│   └── test/
+│       ├── java/ru/msu/cmc/webprac/dao/   # TestNG-тесты
+│       └── resources/
+│           ├── hibernate-test.cfg.xml
+│           └── testng.xml
 ├── docs/
-│   ├── db-schema.png    # Визуализация диаграммы
-│   └── report_stage1.docx
+│   └── db-schema.png        # Визуализация диаграммы
 └── README.md
 ```
 
@@ -38,18 +54,25 @@
 |-----------------|------------------|
 | Java            | 8+               |
 | Apache Ant      | 1.9+             |
-| HSQLDB          | 1.8.0 (jar-файл по умолчанию: `/usr/share/java/hsqldb1.8.0.jar`) |
-
-> Путь к HSQLDB-драйверу можно переопределить свойством `hsqldb.jar` при вызове Ant:
-> ```bash
-> ant -Dhsqldb.jar=/path/to/hsqldb.jar init-db
-> ```
+| Apache Ivy      | 2.5+             |
+| HSQLDB          | 2.7+ (скачивается автоматически через Ivy) |
+| Hibernate       | 5.6 (скачивается автоматически через Ivy) |
+| TestNG          | 7.8 (скачивается автоматически через Ivy) |
 
 ## Быстрый старт
 
 ```bash
+# Скачать все зависимости
+ant resolve
+
+# Скомпилировать проект
+ant compile
+
 # Создать БД и заполнить тестовыми данными
 ant init-db
+
+# Запустить тесты
+ant test
 
 # Просмотреть содержимое всех таблиц
 ant show-db
@@ -57,16 +80,62 @@ ant show-db
 
 ## Команды сборки
 
-| Команда          | Описание |
-|------------------|----------|
-| `ant help`       | Показать список доступных задач |
-| `ant create-db`  | Создать структуру БД (выполнить `schema.sql`) |
-| `ant init-db`    | Создать структуру **и** заполнить тестовыми данными (`seed.sql`) |
-| `ant show-db`    | Вывести содержимое всех таблиц |
-| `ant clear-db`   | Удалить файлы БД с диска |
-| `ant reset-db`   | Полностью пересоздать БД и заполнить её |
+| Команда              | Описание |
+|----------------------|----------|
+| `ant help`           | Показать список доступных задач |
+| `ant resolve`        | Скачать зависимости через Ivy |
+| `ant compile`        | Скомпилировать исходный код |
+| `ant compile-tests`  | Скомпилировать тесты |
+| `ant test`           | Запустить TestNG-тесты |
+| `ant create-db`      | Создать структуру БД (выполнить `schema.sql`) |
+| `ant init-db`        | Создать структуру **и** заполнить тестовыми данными (`seed.sql`) |
+| `ant show-db`        | Вывести содержимое всех таблиц |
+| `ant clear-db`       | Удалить файлы БД с диска |
+| `ant reset-db`       | Полностью пересоздать БД и заполнить её |
+| `ant clean`          | Удалить каталог сборки |
+| `ant clean-all`      | Удалить сборку и БД |
 
 БД создаётся в каталоге `data/` в формате HSQLDB (file-mode); при остановке данные автоматически сбрасываются на диск (`shutdown=true`).
+Тесты используют in-memory БД (`jdbc:hsqldb:mem:testdb`) с автоматическим созданием схемы (`hbm2ddl.auto=create`).
+
+---
+
+## Архитектура Hibernate-слоя
+
+### Entity-классы (хранимые объекты)
+
+Все сущности расположены в пакете `ru.msu.cmc.webprac.entities` и аннотированы стандартными JPA-аннотациями.
+
+| Класс | Таблица | Ключевые связи |
+|-------|---------|----------------|
+| `CarBrand` | `car_brands` | `1 → N` с `Car` |
+| `Car` | `cars` | `N → 1` с `CarBrand`, `1 → N` с `TestDrive` |
+| `Client` | `clients` | `1 → N` с `Order`, `1 → N` с `TestDrive` |
+| `Order` | `orders` | `N → 1` с `Client`, `N → 1` с `Car`, `1 → 1` с `OrderRequirement` |
+| `OrderRequirement` | `order_requirements` | `1 → 1` с `Order` (shared PK через `@MapsId`), `N → 1` с `CarBrand` |
+| `TestDrive` | `test_drives` | `N → 1` с `Client`, `N → 1` с `Car` |
+
+Перечисления: `TransmissionType` (`AT`, `MT`, `CVT`, `AMT`), `OrderStatus` (`IN_PROGRESS`, `WAITING_SUPPLY`, `IN_SHOWROOM`, `TEST_DRIVE`, `COMPLETED`).
+
+### DAO-классы (служебные классы)
+
+Интерфейсы и реализации в `ru.msu.cmc.webprac.dao` / `dao.impl`.
+
+| Интерфейс | Методы с нетривиальной логикой |
+|-----------|-------------------------------|
+| `CarBrandDAO` | `getByName(name)`, `getByManufacturer(name)` — поиск марки по названию |
+| `CarDAO` | `getByRegistrationNumber(num)`, `getByBrand(brand)`, `getByFilter(filter)` — фильтрация по цене, КПП, цвету, мощности и т.д. |
+| `ClientDAO` | `getByPhone(phone)`, `getByEmail(email)`, `getByName(part)`, `getClientsByOrderStatus(status)` |
+| `OrderDAO` | `getByClient(client)`, `getByCar(car)`, `getByStatus(status)`, `updateStatus(id, status)` |
+| `TestDriveDAO` | `getByClient(client)`, `getByCar(car)`, `getByClientAndCar(client, car)` |
+
+Все наследуют `GenericDAO<T>` с базовыми CRUD-методами: `getById`, `getAll`, `save`, `update`, `delete`, `deleteById`.
+
+### Тесты
+
+TestNG-тесты расположены в `src/test/java`. Для каждого DAO-класса свой тестовый класс.
+Тесты работают с in-memory HSQLDB (`hibernate-test.cfg.xml`).
+Покрытие — все нетривиальные методы; для поисковых методов проверяются оба сценария: «найдено» и «не найдено».
 
 ---
 

@@ -1,5 +1,16 @@
 # Runtime-файлы HSQLDB
 data/
 
+# Сборка
+build/
+lib/
+
 # macOS
 .DS_Store
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
