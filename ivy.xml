@@ -21,5 +21,8 @@
 
         <!-- TestNG -->
         <dependency org="org.testng" name="testng" rev="7.8.0" conf="test->default"/>
+
+        <!-- JaCoCo -->
+        <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.8.11" conf="test->default"/>
     </dependencies>
 </ivy-module>

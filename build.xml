@@ -165,7 +165,8 @@
     <target name="compile" depends="resolve" description="Скомпилировать исходный код">
         <mkdir dir="${classes.dir}"/>
         <javac srcdir="${src.main}" destdir="${classes.dir}"
-               includeantruntime="false" encoding="UTF-8" source="1.8" target="1.8">
+               includeantruntime="false" encoding="UTF-8" source="1.8" target="1.8"
+               debug="true" debuglevel="lines,vars,source">
             <classpath refid="compile.classpath"/>
         </javac>
         <copy todir="${classes.dir}">
@@ -193,6 +194,40 @@
                 haltonfailure="true">
             <xmlfileset dir="${res.test}" includes="testng.xml"/>
         </testng>
+    </target>
+
+    <!-- =================== JaCoCo покрытие =================== -->
+    <target name="test-coverage" depends="compile-tests" description="Тесты с покрытием JaCoCo">
+        <mkdir dir="${report.dir}"/>
+        <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" classpathref="test.classpath"/>
+        <jacoco:coverage xmlns:jacoco="antlib:org.jacoco.ant" destfile="${build.dir}/jacoco.exec">
+            <java classname="org.testng.TestNG" fork="true" failonerror="true">
+                <classpath refid="test.classpath"/>
+                <arg value="${res.test}/testng.xml"/>
+            </java>
+        </jacoco:coverage>
+    </target>
+
+    <target name="coverage-report" depends="test-coverage" description="Сгенерировать HTML-отчёт покрытия">
+        <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" classpathref="test.classpath"/>
+        <jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
+            <executiondata>
+                <file file="${build.dir}/jacoco.exec"/>
+            </executiondata>
+            <structure name="Car Dealership DAO Coverage">
+                <classfiles>
+                    <fileset dir="${classes.dir}">
+                        <include name="ru/msu/cmc/webprac/dao/**/*.class"/>
+                    </fileset>
+                </classfiles>
+                <sourcefiles encoding="UTF-8">
+                    <fileset dir="${src.main}"/>
+                </sourcefiles>
+            </structure>
+            <html destdir="${build.dir}/coverage-report"/>
+            <csv destfile="${build.dir}/coverage-report/coverage.csv"/>
+        </jacoco:report>
+        <echo message="Отчёт покрытия: ${build.dir}/coverage-report/index.html"/>
     </target>
 
     <!-- =================== Очистка =================== -->

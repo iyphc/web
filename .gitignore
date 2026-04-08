@@ -4,6 +4,7 @@ data/
 # Сборка
 build/
 lib/
+test-output
 
 # macOS
 .DS_Store
