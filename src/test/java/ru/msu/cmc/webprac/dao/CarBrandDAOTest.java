@@ -120,4 +120,11 @@ public class CarBrandDAOTest extends BaseDAOTest {
         dao.deleteById(id);
         assertNull(dao.getById(id));
     }
+
+    @Test
+    public void testDeleteById_notFound() {
+        int before = dao.getAll().size();
+        dao.deleteById(-999L);
+        assertEquals(dao.getAll().size(), before);
+    }
 }

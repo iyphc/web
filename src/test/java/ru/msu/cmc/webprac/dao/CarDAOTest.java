@@ -180,6 +180,24 @@ public class CarDAOTest extends BaseDAOTest {
     }
 
     @Test
+    public void testGetByFilter_engineVolume() {
+        CarDAO.CarFilter f = new CarDAO.CarFilter();
+        f.setMinEngineVolume(new BigDecimal("2.5"));
+        List<Car> result = carDAO.getByFilter(f);
+        assertEquals(result.size(), 1);
+        assertTrue(result.get(0).getEngineVolumeL().compareTo(new BigDecimal("2.5")) >= 0);
+    }
+
+    @Test
+    public void testGetByFilter_requiredFuel() {
+        CarDAO.CarFilter f = new CarDAO.CarFilter();
+        f.setRequiredFuel("AI-95");
+        List<Car> result = carDAO.getByFilter(f);
+        assertEquals(result.size(), 1);
+        assertEquals(result.get(0).getRequiredFuel(), "AI-95");
+    }
+
+    @Test
     public void testGetByFilter_multipleFilters() {
         CarDAO.CarFilter f = new CarDAO.CarFilter();
         f.setBrand(toyota);

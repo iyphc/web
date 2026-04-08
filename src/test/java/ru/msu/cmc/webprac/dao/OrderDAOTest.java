@@ -171,6 +171,12 @@ public class OrderDAOTest extends BaseDAOTest {
     }
 
     @Test
+    public void testUpdateStatus_notFound() {
+        orderDAO.updateStatus(-999L, OrderStatus.COMPLETED);
+        // should not throw, just no-op
+    }
+
+    @Test
     public void testUpdate() {
         Order o = orderDAO.getByStatus(OrderStatus.COMPLETED).get(0);
         o.setNeedTestDrive(true);
