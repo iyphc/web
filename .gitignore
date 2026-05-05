@@ -3,8 +3,10 @@ data/
 
 # Сборка
 build/
+dist/
 lib/
 test-output
+.ivy2
 
 # macOS
 .DS_Store

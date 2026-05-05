@@ -34,15 +34,21 @@
 │   │   │   ├── enums/       # Перечисления (TransmissionType, OrderStatus)
 │   │   │   ├── dao/         # DAO-интерфейсы
 │   │   │   │   └── impl/    # DAO-реализации
+│   │   │   ├── web/         # Spring MVC контроллеры и DTO Web-слоя
 │   │   │   └── utils/       # HibernateUtil
-│   │   └── resources/
+│   │   ├── resources/
 │   │       ├── hibernate.cfg.xml
 │   │       └── logback.xml
+│   │   └── webapp/
+│   │       ├── WEB-INF/     # web.xml, spring-servlet.xml, JSP-страницы
+│   │       └── static/      # React-приложение и стили
 │   └── test/
 │       ├── java/ru/msu/cmc/webprac/dao/   # TestNG-тесты
+│       ├── java/ru/msu/cmc/webprac/system/ # HTTPUnit системные тесты
 │       └── resources/
 │           ├── hibernate-test.cfg.xml
-│           └── testng.xml
+│           ├── testng.xml
+│           └── system-testng.xml
 ├── docs/
 │   └── db-schema.png        # Визуализация диаграммы
 └── README.md
@@ -76,6 +82,9 @@ ant test
 
 # Просмотреть содержимое всех таблиц
 ant show-db
+
+# Собрать Web-приложение
+ant war
 ```
 
 ## Команды сборки
@@ -87,6 +96,10 @@ ant show-db
 | `ant compile`        | Скомпилировать исходный код |
 | `ant compile-tests`  | Скомпилировать тесты |
 | `ant test`           | Запустить TestNG-тесты |
+| `ant system-test`    | Запустить системные HTTPUnit-тесты против `-Dsystem.baseUrl` |
+| `ant war`            | Собрать `dist/car-dealership.war` |
+| `ant deploy`         | Развернуть WAR: `ant deploy -Ddeploy.dir=/path/to/tomcat/webapps` |
+| `ant full-build`     | Пересоздать БД и собрать WAR |
 | `ant create-db`      | Создать структуру БД (выполнить `schema.sql`) |
 | `ant init-db`        | Создать структуру **и** заполнить тестовыми данными (`seed.sql`) |
 | `ant show-db`        | Вывести содержимое всех таблиц |
@@ -162,6 +175,27 @@ Total tests run: 69, Passes: 69, Failures: 0, Skips: 0
 ant test              # запуск тестов (отчёт TestNG в build/test-reports/)
 ant coverage-report   # тесты + покрытие JaCoCo (HTML-отчёт в build/coverage-report/)
 ```
+
+## Web-интерфейс
+
+Web-слой реализован на Spring MVC. JSP-страницы в `src/main/webapp/WEB-INF/jsp/` подключают React-приложение из `src/main/webapp/static/js/app.js`.
+
+| API | Назначение |
+|-----|------------|
+| `/api/dashboard` | Сводка и перечисления |
+| `/api/brands` | Марки автомобилей |
+| `/api/cars` | Автомобили и фильтрация |
+| `/api/clients` | Клиенты и поиск |
+| `/api/orders` | Заказы и статусы |
+| `/api/test-drives` | Тест-драйвы |
+
+```bash
+ant war
+ant deploy -Ddeploy.dir=/path/to/tomcat/webapps
+ant system-test -Dsystem.baseUrl=http://localhost:8080/car-dealership
+```
+
+Описание системных сценариев: `docs/system-testing.md`. Итоговый отчет: `docs/final-report.md`.
 
 ---
 

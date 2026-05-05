@@ -1,0 +1,20 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css">
+</head>
+<body>
+<div id="root"></div>
+<script>
+    window.APP_CONTEXT = '${pageContext.request.contextPath}';
+    window.APP_ENTITY_ID = '${entityId}';
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="${pageContext.request.contextPath}/static/js/app.js"></script>
+</body>
+</html>

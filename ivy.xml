@@ -19,8 +19,15 @@
         <!-- Logging -->
         <dependency org="ch.qos.logback" name="logback-classic" rev="1.2.12" conf="compile->default"/>
 
+        <!-- Spring MVC web layer -->
+        <dependency org="org.springframework" name="spring-webmvc" rev="5.3.34" conf="compile->default"/>
+        <dependency org="javax.servlet" name="javax.servlet-api" rev="4.0.1" conf="compile->default"/>
+
         <!-- TestNG -->
         <dependency org="org.testng" name="testng" rev="7.8.0" conf="test->default"/>
+
+        <!-- System tests over HTTP -->
+        <dependency org="org.httpunit" name="httpunit" rev="1.7.3" conf="test->default"/>
 
         <!-- JaCoCo -->
         <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.8.11" conf="test->default"/>

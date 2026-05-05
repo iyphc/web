@@ -4,7 +4,7 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.connection.driver_class">org.hsqldb.jdbc.JDBCDriver</property>
-        <property name="hibernate.connection.url">jdbc:hsqldb:file:data/car_dealership;shutdown=true</property>
+        <property name="hibernate.connection.url">jdbc:hsqldb:file:/private/tmp/webprac-car-dealership-data/car_dealership;shutdown=true</property>
         <property name="hibernate.connection.username">sa</property>
         <property name="hibernate.connection.password"></property>
         <property name="hibernate.dialect">org.hibernate.dialect.HSQLDialect</property>

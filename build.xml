@@ -3,7 +3,7 @@
          xmlns:ivy="antlib:org.apache.ivy.ant">
 
     <!-- =================== Свойства =================== -->
-    <property name="db.dir"       value="data"/>
+    <property name="db.dir"       value="/private/tmp/webprac-car-dealership-data"/>
     <property name="db.name"      value="car_dealership"/>
     <property name="db.driver"    value="org.hsqldb.jdbc.JDBCDriver"/>
     <property name="db.url"       value="jdbc:hsqldb:file:${db.dir}/${db.name};shutdown=true"/>
@@ -23,6 +23,10 @@
     <property name="test.classes"  value="${build.dir}/test-classes"/>
     <property name="lib.dir"       value="lib"/>
     <property name="report.dir"    value="${build.dir}/test-reports"/>
+    <property name="web.dir"       value="src/main/webapp"/>
+    <property name="dist.dir"      value="dist"/>
+    <property name="war.file"      value="${dist.dir}/car-dealership.war"/>
+    <property name="ivy.default.ivy.user.dir" value="${basedir}/.ivy2"/>
 
     <!-- =================== Ivy : resolve =================== -->
     <target name="resolve" description="Скачать зависимости через Ivy">
@@ -90,6 +94,10 @@
         <echo message="  ant compile    - скомпилировать исходный код"/>
         <echo message="  ant compile-tests - скомпилировать тесты"/>
         <echo message="  ant test       - запустить TestNG-тесты"/>
+        <echo message="  ant system-test - запустить системные HTTPUnit-тесты против -Dsystem.baseUrl"/>
+        <echo message="  ant war        - собрать WAR-файл приложения"/>
+        <echo message="  ant deploy -Ddeploy.dir=/path/to/tomcat/webapps - собрать и развернуть WAR"/>
+        <echo message="  ant full-build - пересоздать БД, скомпилировать и собрать WAR"/>
         <echo message="  ant create-db  - создать структуру БД"/>
         <echo message="  ant init-db    - создать структуру и заполнить тестовыми данными"/>
         <echo message="  ant show-db    - вывести содержимое БД"/>
@@ -196,6 +204,40 @@
         </testng>
     </target>
 
+    <target name="system-test" depends="compile-tests" description="Запустить системные HTTPUnit-тесты">
+        <mkdir dir="${report.dir}/system"/>
+        <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="test.classpath"/>
+        <testng classpathref="test.classpath"
+                outputdir="${report.dir}/system"
+                haltonfailure="true">
+            <xmlfileset dir="${res.test}" includes="system-testng.xml"/>
+            <sysproperty key="system.baseUrl" value="${system.baseUrl}"/>
+        </testng>
+    </target>
+
+    <!-- =================== Web-сборка =================== -->
+    <target name="war" depends="compile" description="Собрать WAR-файл приложения">
+        <mkdir dir="${dist.dir}"/>
+        <war destfile="${war.file}" webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}">
+                <exclude name="WEB-INF/web.xml"/>
+            </fileset>
+            <classes dir="${classes.dir}"/>
+            <lib dir="${lib.dir}/compile">
+                <exclude name="javax.servlet-api-*.jar"/>
+            </lib>
+        </war>
+        <echo message="WAR-файл собран: ${war.file}"/>
+    </target>
+
+    <target name="deploy" depends="war" description="Развернуть WAR в каталог сервера приложений">
+        <fail unless="deploy.dir" message="Укажите каталог развертывания: ant deploy -Ddeploy.dir=/path/to/tomcat/webapps"/>
+        <copy file="${war.file}" todir="${deploy.dir}"/>
+        <echo message="Приложение развернуто в ${deploy.dir}"/>
+    </target>
+
+    <target name="full-build" depends="reset-db,war" description="Полная сборка и подготовка приложения"/>
+
     <!-- =================== JaCoCo покрытие =================== -->
     <target name="test-coverage" depends="compile-tests" description="Тесты с покрытием JaCoCo">
         <mkdir dir="${report.dir}"/>
@@ -233,6 +275,7 @@
     <!-- =================== Очистка =================== -->
     <target name="clean" description="Удалить каталог сборки">
         <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
     </target>
 
     <target name="clean-all" depends="clean,clear-db" description="Удалить сборку и БД"/>
